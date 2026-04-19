@@ -41,19 +41,7 @@ L’application est structurée en plusieurs couches :
 
 ---
 
-## ▶️ Installation
 
-1. Cloner le projet :
-
-```bash
-git clone https://github.com/your-repo/stars-gallery.git
-```
-
-2. Ouvrir avec Android Studio
-3. Synchroniser Gradle
-4. Lancer sur un émulateur ou appareil réel
-
----
 
 ## 🎥 Vidéo démonstrative (compressée)
 
@@ -62,7 +50,7 @@ Une vidéo démonstrative du fonctionnement de l’application est incluse dans 
 ### 📁 Emplacement
 
 ```
-/demo/demo_video_compressed.mp4
+demo_stars.mp4
 ```
 
 ### 📌 Contenu de la vidéo
