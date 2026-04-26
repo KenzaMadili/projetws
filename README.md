@@ -41,32 +41,12 @@ Cette application Android permet d'**ajouter des étudiants** dans une base de d
 
 > La vidéo ci-dessous présente le fonctionnement complet du lab.
 
-### Ce que montre la démo
 
-| Timestamp | Action démontrée |
-|-----------|-----------------|
-| `00:00` | Démarrage de XAMPP — Apache + MySQL en vert |
-| `00:20` | Vérification de la base `school1` dans phpMyAdmin |
-| `00:40` | Test GET via navigateur (`loadEtudiant.php` → JSON) |
-| `01:00` | Test POST via **Advanced REST Client** (`createEtudiant.php`) |
-| `01:25` | Vérification de l'insertion dans phpMyAdmin |
-| `01:45` | Lancement de l'application Android sur l'émulateur |
-| `02:00` | Saisie : Nom, Prénom, sélection Ville (spinner) et Sexe (radio) |
-| `02:20` | Clic sur **Ajouter l'étudiant** |
-| `02:30` | Observation de la réponse JSON dans **Logcat** |
-| `02:50` | Vérification de l'ajout dans phpMyAdmin |
-| `03:05` | Ajout d'un second étudiant — liste JSON mise à jour |
 
-### 📹 Lien vidéo
 
-```
-[ Insérer ici le lien vers votre vidéo de démonstration ]
-```
+https://github.com/user-attachments/assets/b4b6c6c0-32b8-4efe-99ca-e30d8c3f8ba4
 
-> **Suggestion :** Placez Android Studio et phpMyAdmin côte à côte à l'écran
-> pour montrer la synchronisation en temps réel lors de chaque ajout.
 
----
 
 ## ✅ Fonctionnalités
 
