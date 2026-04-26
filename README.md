@@ -1,7 +1,9 @@
 # 📱 Lab Android — Gestion des Étudiants avec XAMPP & Web Services PHP
 
-> Application Android connectée à un serveur **XAMPP local** via des **Web Services PHP**.  
-> Utilise **Volley** pour les requêtes HTTP et **Gson** pour le parsing JSON.
+
+
+> Extension du Lab 15 — Implémentation d'un **RecyclerView** connecté à MySQL via PHP,
+> avec modification et suppression dynamiques depuis l'application Android.
 
 ---
 
@@ -14,7 +16,6 @@
 - [Prérequis](#prérequis)
 - [Installation & Configuration](#installation--configuration)
 - [Structure des fichiers](#structure-des-fichiers)
-- [Base de données MySQL](#base-de-données-mysql)
 - [Web Services PHP](#web-services-php)
 - [Configuration réseau](#configuration-réseau)
 - [Utilisation](#utilisation)
@@ -24,80 +25,90 @@
 
 ## Aperçu
 
-Cette application Android permet d'**ajouter des étudiants** dans une base de données **MySQL** hébergée sur **XAMPP**. L'application envoie les données via une requête HTTP **POST** à un script PHP, qui insère l'étudiant en base et retourne la liste complète en **JSON**, affichée dans le **Logcat**.
+Ce challenge étend le Lab 15 en ajoutant une interface complète de gestion des étudiants :
+affichage dans un **RecyclerView**, **popup de modification**, **alerte de confirmation**
+avant suppression, et **actualisation dynamique** après chaque opération.
 
-### Stack technique
+### Ce qui a été ajouté par rapport au Lab 2
 
-| Côté Android | Côté Serveur |
-|---|---|
-| Java + Android SDK | PHP 8 |
-| Volley (requêtes HTTP POST) | Apache (XAMPP) |
-| Gson (parsing JSON) | MySQL (XAMPP) |
-| Spinner + RadioButton (UI) | PDO (connexion BDD) |
+| Lab 15 | Ce lab |
+|-------|-----------|
+| Formulaire d'ajout uniquement | Formulaire d'ajout + liste complète |
+| Résultat visible dans Logcat | Résultat visible dans l'interface |
+| 2 web services PHP | 4 web services PHP |
+| 1 activité | 2 activités + 1 adapter |
 
 ---
 
 ## 🎬 Démonstration vidéo
 
-> La vidéo ci-dessous présente le fonctionnement complet du lab.
+> La vidéo ci-dessous présente le fonctionnement complet du challenge.
 
 
 
+https://github.com/user-attachments/assets/3def0b20-e98a-473d-ba02-ea2cc3aaf322
 
-https://github.com/user-attachments/assets/b4b6c6c0-32b8-4efe-99ca-e30d8c3f8ba4
 
 
+---
 
 ## ✅ Fonctionnalités
 
-- ➕ **Ajouter** un étudiant (nom, prénom, ville, sexe) via requête HTTP POST
-- 📋 **Afficher** dans Logcat la liste complète retournée par le serveur
-- 🌐 Communication avec serveur PHP local via **Volley**
-- 🔄 **Réponse JSON** parsée avec **Gson** après chaque ajout
-- 🎨 Interface avec **Spinner** (villes) et **RadioButton** (sexe)
+- 📋 **Lister** tous les étudiants dans un RecyclerView avec avatar (initiales)
+- ➕ **Ajouter** via FAB (Floating Action Button) — standard Material Design
+- ✏️ **Modifier** via dialog pré-rempli au clic sur un élément
+- 🗑️ **Supprimer** avec alerte de confirmation avant exécution
+- 🔄 **Actualisation automatique** de la liste après chaque opération
+- 🎨 Interface moderne : cards, avatars colorés, FAB vert
 
 ---
 
 ## 🏗️ Architecture du projet
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                   APPLICATION ANDROID                    │
-│                                                         │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │               AddEtudiant.java                   │  │
-│  │   Nom | Prénom | Ville (Spinner) | Sexe (Radio)  │  │
-│  │                  Bouton Ajouter                   │  │
-│  └───────────────────────┬──────────────────────────┘  │
-│                          │                              │
-│  ┌───────────────────────▼──────────────────────────┐  │
-│  │           Volley — StringRequest POST            │  │
-│  │         params : nom, prenom, ville, sexe        │  │
-│  └───────────────────────┬──────────────────────────┘  │
-│                          │ réponse JSON                 │
-│  ┌───────────────────────▼──────────────────────────┐  │
-│  │        Gson — TypeToken<Collection<Etudiant>>    │  │
-│  │              Log.d("ETUDIANT", ...)              │  │
-│  └──────────────────────────────────────────────────┘  │
-└──────────────────────────┬──────────────────────────────┘
-                           │ HTTP POST
-┌──────────────────────────┼──────────────────────────────┐
-│                    SERVEUR XAMPP                         │
-│                          │                              │
-│  ┌───────────────────────▼──────────────────────────┐  │
-│  │          ws/createEtudiant.php                   │  │
-│  │   reçoit POST → insère → retourne findAllApi()   │  │
-│  └───────────────────────┬──────────────────────────┘  │
-│                          │                              │
-│  ┌───────────────────────▼──────────────────────────┐  │
-│  │        service/EtudiantService.php (PDO)          │  │
-│  └───────────────────────┬──────────────────────────┘  │
-│                          │                              │
-│  ┌───────────────────────▼──────────────────────────┐  │
-│  │         MySQL — Base : school1                   │  │
-│  │              Table : Etudiant                    │  │
-│  └──────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                     APPLICATION ANDROID                      │
+│                                                             │
+│  ┌───────────────────────┐    ┌──────────────────────────┐ │
+│  │  ListEtudiantActivity │    │      AddEtudiant          │ │
+│  │  ┌─────────────────┐  │    │  Nom | Prénom             │ │
+│  │  │  RecyclerView   │  │    │  Ville | Sexe             │ │
+│  │  │  ┌───────────┐  │  │    │  Bouton Ajouter           │ │
+│  │  │  │item_card  │  │  │    └──────────────────────────┘ │
+│  │  │  │avatar|nom │  │  │                                 │
+│  │  │  │ville·sexe │  │  │                                 │
+│  │  │  └───────────┘  │  │                                 │
+│  │  └─────────────────┘  │                                 │
+│  │  FAB (+)              │                                 │
+│  │  ┌─────────────────┐  │                                 │
+│  │  │ AlertDialog     │  │                                 │
+│  │  │ Modifier /      │  │                                 │
+│  │  │ Supprimer       │  │                                 │
+│  │  └─────────────────┘  │                                 │
+│  └──────────┬────────────┘                                 │
+│             │  Volley POST/GET                              │
+│  ┌──────────▼────────────────────────────────────────────┐ │
+│  │              EtudiantAdapter (RecyclerView)            │ │
+│  │     onItemClick → showOptionsDialog()                  │ │
+│  └──────────────────────────────────────────────────────┘  │
+└──────────────────────┬──────────────────────────────────────┘
+                       │ HTTP POST / GET
+┌──────────────────────┼──────────────────────────────────────┐
+│                   SERVEUR XAMPP                              │
+│                      │                                      │
+│  ┌───────────────────▼──────────────────────────────────┐  │
+│  │   loadEtudiant.php   │   createEtudiant.php           │  │
+│  │   updateEtudiant.php │   deleteEtudiant.php           │  │
+│  └───────────────────┬──────────────────────────────────┘  │
+│                      │                                      │
+│  ┌───────────────────▼──────────────────────────────────┐  │
+│  │           EtudiantService.php (PDO)                   │  │
+│  └───────────────────┬──────────────────────────────────┘  │
+│                      │                                      │
+│  ┌───────────────────▼──────────────────────────────────┐  │
+│  │          MySQL — Base : school1 — Table : Etudiant    │  │
+│  └──────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -120,7 +131,7 @@ https://github.com/user-attachments/assets/b4b6c6c0-32b8-4efe-99ca-e30d8c3f8ba4
 | Android Studio | Hedgehog ou supérieur |
 | JDK | 11 ou supérieur |
 | Android SDK | API 26 minimum |
-| Émulateur | Android 8.0+ |
+| Appareil / Émulateur | Android 8.0+ |
 
 ---
 
@@ -129,98 +140,76 @@ https://github.com/user-attachments/assets/b4b6c6c0-32b8-4efe-99ca-e30d8c3f8ba4
 ### Étape 1 — Démarrer XAMPP
 
 1. Ouvrir le **XAMPP Control Panel**
-2. Cliquer **Start** sur **Apache** et **MySQL**
-3. Vérifier que les deux services sont affichés en vert
+2. Démarrer **Apache** et **MySQL**
+3. Vérifier que les deux services sont en vert
 
-### Étape 2 — Créer la base de données
+### Étape 2 — Déposer les fichiers PHP
 
-Ouvrir **phpMyAdmin** (`http://localhost/phpmyadmin`) et exécuter :
-
-```sql
-CREATE DATABASE school1;
-
-USE school1;
-
-CREATE TABLE Etudiant (
-    id     INT AUTO_INCREMENT PRIMARY KEY,
-    nom    VARCHAR(50),
-    prenom VARCHAR(50),
-    ville  VARCHAR(50),
-    sexe   VARCHAR(10)
-);
-
--- Données de test optionnelles
-INSERT INTO Etudiant (nom, prenom, ville, sexe) VALUES
-    ('Lachgar', 'Mohamed', 'Rabat',     'homme'),
-    ('Safi',    'Amine',   'Marrakech', 'homme');
-```
-
-### Étape 3 — Déployer les fichiers PHP
-
-Copier le dossier `projet/` dans :
+Copier les 2 nouveaux fichiers dans :
 
 ```
-C:\xampp\htdocs\projet\
+C:\xampp\htdocs\projet\ws\
+├── createEtudiant.php      ← existant (Lab 2)
+├── loadEtudiant.php        ← existant (Lab 2)
+├── updateEtudiant.php      ← 🆕 nouveau (challenge)
+└── deleteEtudiant.php      ← 🆕 nouveau (challenge)
 ```
 
-Structure attendue :
+### Étape 3 — Tester les nouveaux web services
 
+**Test update via Postman / Advanced REST Client :**
 ```
-C:\xampp\htdocs\projet\
-├── classes/
-│   └── Etudiant.php
-├── connexion/
-│   └── Connexion.php
-├── dao/
-│   └── IDao.php
-├── service/
-│   └── EtudiantService.php
-└── ws/
-    ├── createEtudiant.php
-    └── loadEtudiant.php
-```
-
-### Étape 4 — Tester les Web Services
-
-**Test GET** — ouvrir dans le navigateur :
-
-```
-http://localhost/projet/ws/loadEtudiant.php
-```
-
-Résultat attendu :
-
-```json
-[
-  {"id":"1","nom":"Lachgar","prenom":"Mohamed","ville":"Rabat","sexe":"homme"},
-  {"id":"2","nom":"Safi","prenom":"Amine","ville":"Marrakech","sexe":"homme"}
-]
-```
-
-**Test POST** — via Advanced REST Client ou Postman :
-
-```
-URL    : http://localhost/projet/ws/createEtudiant.php
+URL    : http://localhost/projet/ws/updateEtudiant.php
 Method : POST
-Type   : x-www-form-urlencoded
-Body   : nom=Dupont | prenom=Sara | ville=Casablanca | sexe=femme
+Body   : id=1&nom=NouveauNom&prenom=NouveauPrenom&ville=Rabat&sexe=homme
 ```
 
-### Étape 5 — Vérifier l'URL dans Android
+**Test delete :**
+```
+URL    : http://localhost/projet/ws/deleteEtudiant.php
+Method : POST
+Body   : id=1
+```
 
-Ouvrir `AddEtudiant.java` et confirmer la constante :
+Les deux doivent retourner la liste JSON mise à jour.
+
+### Étape 4 — Configurer l'URL selon votre connexion
+
+Modifier `BASE_URL` dans `ListEtudiantActivity.java` et `AddEtudiant.java` :
 
 ```java
-// Émulateur Android uniquement
-// 10.0.2.2 = alias de localhost du PC depuis l'émulateur
-private static final String insertUrl =
-    "http://10.0.2.2/projet/ws/createEtudiant.php";
+// Émulateur Android
+private static final String BASE_URL = "http://10.0.2.2/projet/ws/";
+
+// Vrai téléphone via WiFi (même réseau que le PC)
+private static final String BASE_URL = "http://192.168.1.XX/projet/ws/";
+
+// Vrai téléphone via câble USB (ADB reverse)
+// → Exécuter d'abord dans cmd : adb reverse tcp:80 tcp:80
+private static final String BASE_URL = "http://127.0.0.1/projet/ws/";
+
+// Vrai téléphone en 4G (via ngrok)
+private static final String BASE_URL = "https://abc123.ngrok.io/projet/ws/";
+```
+
+### Étape 5 — Ajouter la dépendance Material
+
+Dans `build.gradle (Module: app)` :
+
+```groovy
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.recyclerview:recyclerview:1.3.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'com.android.volley:volley:1.2.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
+}
 ```
 
 ### Étape 6 — Lancer l'application
 
 ```
-Android Studio → Run ▶ (sur émulateur)
+Android Studio → Run ▶
 ```
 
 ---
@@ -235,18 +224,24 @@ app/
 │   └── AndroidManifest.xml
 │
 ├── java/com/example/projetws/
-│   ├── AddEtudiant.java        ← Activité principale
+│   ├── ListEtudiantActivity.java   ← 🆕 Activité principale (liste)
+│   ├── AddEtudiant.java            ← existant (Lab 2)
+│   ├── EtudiantAdapter.java        ← 🆕 Adapter RecyclerView
 │   └── beans/
-│       └── Etudiant.java       ← Modèle de données
+│       └── Etudiant.java           ← mis à jour (+ setters)
 │
 └── res/
     ├── layout/
-    │   └── activity_add_etudiant.xml
+    │   ├── activity_list_etudiant.xml  ← 🆕 Liste + FAB
+    │   ├── activity_add_etudiant.xml   ← existant
+    │   ├── item_etudiant.xml           ← 🆕 Carte RecyclerView
+    │   └── dialog_etudiant.xml         ← 🆕 Popup modification
     ├── drawable/
-    │   └── card_background.xml
+    │   ├── card_background.xml
+    │   └── avatar_background.xml       ← 🆕 Cercle avatar
     ├── values/
     │   ├── styles.xml
-    │   └── arrays.xml          ← Liste des villes pour le Spinner
+    │   └── arrays.xml
     └── xml/
         └── network_security_config.xml
 ```
@@ -254,69 +249,56 @@ app/
 ### PHP (XAMPP)
 
 ```
-C:\xampp\htdocs\projet\
-├── classes/
-│   └── Etudiant.php            ← Modèle PHP
-├── connexion/
-│   └── Connexion.php           ← Connexion PDO à MySQL
-├── dao/
-│   └── IDao.php                ← Interface CRUD
-├── service/
-│   └── EtudiantService.php     ← Logique métier + requêtes SQL
-└── ws/
-    ├── createEtudiant.php      ← Web service POST ajout
-    └── loadEtudiant.php        ← Web service GET liste
+C:\xampp\htdocs\projet\ws\
+├── loadEtudiant.php        ← GET  — liste tous les étudiants
+├── createEtudiant.php      ← POST — ajoute un étudiant
+├── updateEtudiant.php      ← POST — modifie un étudiant  🆕
+└── deleteEtudiant.php      ← POST — supprime un étudiant 🆕
 ```
-
----
-
-## 🗄️ Base de données MySQL
-
-**Nom :** `school1`  
-**Table :** `Etudiant`
-
-| Colonne | Type | Contrainte |
-|---------|------|-----------|
-| `id` | INT | PRIMARY KEY AUTO_INCREMENT |
-| `nom` | VARCHAR(50) | — |
-| `prenom` | VARCHAR(50) | — |
-| `ville` | VARCHAR(50) | — |
-| `sexe` | VARCHAR(10) | — |
 
 ---
 
 ## 🌐 Web Services PHP
 
-| Fichier | Méthode HTTP | Description | Réponse |
-|---------|-------------|-------------|---------|
+| Fichier | Méthode | Description | Réponse |
+|---------|---------|-------------|---------|
 | `loadEtudiant.php` | GET | Liste tous les étudiants | JSON array |
 | `createEtudiant.php` | POST | Ajoute un étudiant | JSON array mis à jour |
+| `updateEtudiant.php` | POST | Modifie un étudiant | JSON array mis à jour |
+| `deleteEtudiant.php` | POST | Supprime un étudiant | JSON array mis à jour |
 
-### Paramètres POST de `createEtudiant.php`
+### Paramètres POST
+
+**`updateEtudiant.php`**
 
 | Paramètre | Type | Exemple |
 |-----------|------|---------|
+| `id` | int | `2` |
 | `nom` | string | `Benali` |
 | `prenom` | string | `Yassine` |
 | `ville` | string | `Casablanca` |
 | `sexe` | string | `homme` |
 
-### Exemple de réponse JSON
+**`deleteEtudiant.php`**
 
-```json
-[
-  {"id":"1","nom":"Lachgar","prenom":"Mohamed","ville":"Rabat","sexe":"homme"},
-  {"id":"2","nom":"Benali","prenom":"Yassine","ville":"Casablanca","sexe":"homme"}
-]
-```
+| Paramètre | Type | Exemple |
+|-----------|------|---------|
+| `id` | int | `2` |
 
 ---
 
 ## 🔒 Configuration réseau
 
-### `res/xml/network_security_config.xml`
+### Connexion selon l'environnement
 
-Nécessaire pour autoriser les connexions HTTP (Android 9+) :
+| Environnement | URL à utiliser | Commande préalable |
+|---------------|---------------|-------------------|
+| Émulateur | `http://10.0.2.2/projet/ws/` | Aucune |
+| Téléphone WiFi | `http://192.168.1.XX/projet/ws/` | `ipconfig` pour trouver l'IP |
+| Téléphone USB | `http://127.0.0.1/projet/ws/` | `adb reverse tcp:80 tcp:80` |
+| Téléphone 4G | `https://xxx.ngrok.io/projet/ws/` | `ngrok http 80` |
+
+### `res/xml/network_security_config.xml`
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -329,51 +311,37 @@ Nécessaire pour autoriser les connexions HTTP (Android 9+) :
 </network-security-config>
 ```
 
-### `AndroidManifest.xml` — attributs requis
-
-```xml
-<uses-permission android:name="android.permission.INTERNET" />
-
-<application
-    android:networkSecurityConfig="@xml/network_security_config"
-    android:usesCleartextTraffic="true"
-    android:exported="true"
-    ...>
-```
-
-### `build.gradle` — dépendances
-
-```groovy
-dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.android.volley:volley:1.2.1'
-    implementation 'com.google.code.gson:gson:2.10.1'
-}
-```
-
 ---
 
 ## 📖 Utilisation
 
+### Consulter la liste
+
+Au lancement, la liste se charge automatiquement. Chaque carte affiche les **initiales**
+de l'étudiant dans un avatar vert, son **nom complet** et sa **ville · sexe**.
+
 ### Ajouter un étudiant
 
-1. Remplir le champ **Nom**
-2. Remplir le champ **Prénom**
-3. Sélectionner une **Ville** dans le spinner déroulant
-4. Choisir le **Sexe** via les boutons radio (Homme / Femme)
-5. Appuyer sur **Ajouter l'étudiant**
+1. Appuyer sur le **bouton FAB vert (+)** en bas à droite
+2. Remplir le formulaire : Nom, Prénom, Ville, Sexe
+3. Appuyer sur **Ajouter l'étudiant**
+4. Retour automatique à la liste — nouvel étudiant visible
 
-### Lire la réponse dans Logcat
+### Modifier un étudiant
 
-Après l'ajout, ouvrir **Logcat** dans Android Studio et filtrer par le tag `ETUDIANT` :
+1. Appuyer sur la **carte de l'étudiant**
+2. Choisir **Modifier** dans le popup
+3. Le dialog s'ouvre **pré-rempli** avec les données actuelles
+4. Modifier les champs souhaités
+5. Appuyer sur **Enregistrer** → liste actualisée instantanément
 
-```
-D/RESPONSE: [{"id":"1","nom":"Lachgar","prenom":"Mohamed","ville":"Rabat","sexe":"homme"},
-             {"id":"2","nom":"Benali","prenom":"Yassine","ville":"Casablanca","sexe":"homme"}]
+### Supprimer un étudiant
 
-D/ETUDIANT: Etudiant{id=1, nom='Lachgar', prenom='Mohamed', ville='Rabat', sexe='homme'}
-D/ETUDIANT: Etudiant{id=2, nom='Benali', prenom='Yassine', ville='Casablanca', sexe='homme'}
-```
+1. Appuyer sur la **carte de l'étudiant**
+2. Choisir **Supprimer** dans le popup
+3. Lire l'alerte de confirmation : *"Voulez-vous vraiment supprimer X ?"*
+4. Appuyer sur **Supprimer** pour confirmer
+5. L'étudiant disparaît de la liste instantanément
 
 ---
 
@@ -381,22 +349,22 @@ D/ETUDIANT: Etudiant{id=2, nom='Benali', prenom='Yassine', ville='Casablanca', s
 
 | Problème | Cause probable | Solution |
 |----------|---------------|----------|
-| `Erreur réseau : null` | XAMPP non démarré | Démarrer Apache + MySQL |
-| `Erreur réseau : null` | Mauvaise URL | Vérifier `insertUrl` dans `AddEtudiant.java` |
+| `Erreur chargement : null` | XAMPP non démarré | Démarrer Apache + MySQL |
+| `Erreur chargement : null` | Câble USB sans ADB reverse | Exécuter `adb reverse tcp:80 tcp:80` |
+| `Erreur chargement : null` | Téléphone en 4G | Utiliser WiFi ou ngrok |
 | `CleartextTraffic exception` | HTTP bloqué Android 9+ | Vérifier `network_security_config.xml` |
-| `404 Not Found` | Mauvais chemin PHP | Vérifier que les fichiers sont dans `htdocs/projet/ws/` |
-| JSON vide `[]` | Table vide | Insérer des données via phpMyAdmin |
-| App crash au lancement | `exported` manquant | Ajouter `android:exported="true"` dans Manifest |
-| `Connection refused` | Pare-feu Windows | Autoriser Apache dans le pare-feu Windows |
-| Aucune réponse Logcat | Filtrage incorrect | Filtrer par `RESPONSE` ou `ETUDIANT` dans Logcat |
+| Liste vide sans erreur | Table MySQL vide | Ajouter des données via phpMyAdmin |
+| `404 Not Found` | Fichiers PHP mal placés | Vérifier `htdocs/projet/ws/` |
+| FAB non affiché | Material non importé | Ajouter dépendance Material dans `build.gradle` |
+| Dialog vide à l'ouverture | Setters manquants dans `Etudiant.java` | Ajouter `setNom()`, `setPrenom()`, etc. |
 
 ---
 
 ## 👨‍💻 Auteur
 
-> Réalisé dans le cadre d'un TP Android — FST  
+> Réalisé par : MADILI Kenza 
 > Module : Développement Mobile  
-> Technologies : Android · Java · PHP · MySQL · XAMPP · Volley · Gson
+> Technologies : Android · Java · PHP · MySQL · XAMPP · Volley · Gson · RecyclerView · Material Design
 
 ---
 
